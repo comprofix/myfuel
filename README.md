@@ -52,7 +52,22 @@ npm test          # server unit tests
 npm run typecheck
 ```
 
-## API quota (NSW free plan: 2,500 calls/month)
+## API
+
+### NSW Fuel API
+
+NSW, ACT and TAS prices come from the NSW Government Fuel API, which needs an API key and
+secret:
+
+1. Sign up (or log in) at https://api.nsw.gov.au/Account/Login.
+2. Subscribe to the [Fuel API](https://api.nsw.gov.au/Product/Index/22) to get your API key
+   and secret.
+3. In MyFuel, go to **Settings → Data sources**, click **NSW** or **TAS**, enter the key and
+   secret, then **Test connection**.
+
+The key and secret are encrypted before they're stored.
+
+### API quota (NSW free plan: 2,500 calls/month)
 
 Every call to the provider (including token requests) is logged in `api_calls`.
 Settings shows calls used this month and the projected monthly usage for the saved
@@ -60,11 +75,41 @@ schedule. The poller stops when `monthly limit − reserve` is reached; manual r
 stop at the hard limit. Defaults: NSW every 30 min, TAS every 2 h, paused 22:00–05:00
 Sydney time ≈ 1,400 calls/month.
 
+### MyFuel NT
+
+NT prices come from [MyFuel NT](https://myfuelnt.nt.gov.au/), the NT Government's official
+fuel price website. No sign-up or key is needed.
+
+- MyFuel NT has no published API. The app requests the site's own results page and reads
+  the station and price data embedded in it; one request returns every NT outlet
+  (about 214) with all its fuel prices.
+- The feed doesn't say when each price was set, so the app shows when it first saw that price.
+- Fuels marked out of stock are skipped. `PD` (premium diesel) is stored as `PDL`, and
+  `LAF` is Low Aromatic Fuel.
+- Because this relies on the page layout, a site change could break it. The refresh then
+  fails with an error in **Settings → Activity** and the existing NT prices stay on the map.
+- Default refresh: every hour.
+
+### FuelWatch WA
+
+WA prices come from [FuelWatch](https://www.fuelwatch.wa.gov.au/), the WA Government's
+official fuel price service, through its public RSS feed
+(`https://www.fuelwatch.wa.gov.au/fuelwatch/fuelWatchRSS`). No sign-up or key is needed.
+
+- The feed returns every WA station for one fuel type, so each refresh makes one request
+  per fuel type (7 in total).
+- WA prices are fixed for the whole day from 6am; tomorrow's prices are published after
+  2:30pm.
+- The feed has no station IDs or postcodes, so stations are identified by address and
+  coordinates, and postcodes are looked up from the suburb name.
+- FuelWatch requires credit with a link back to its site; the map shows it.
+- Default refresh: every 2 hours.
+
 ## Layout
 
 ```
 server/src/
-  sources/        one adapter per provider (nsw.ts) + credential/quota service
+  sources/        one adapter per provider (nsw.ts, nt.ts, wa.ts) + credential/quota service
   poller.ts       scheduler; ingest.ts applies a snapshot and records price history
   routes/         stations/search API and admin API
   auth.ts         sessions (httpOnly cookie), scrypt password hashes
