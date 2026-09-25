@@ -54,6 +54,33 @@ npm test          # server unit tests
 npm run typecheck
 ```
 
+## Android app
+
+`android/` is a Capacitor app that works with any MyFuel server. On first launch it asks for
+your server's address, saves it, and from then on loads the web app from that server, so UI
+changes only need a server redeploy. **Change server** (on the sign-in page and in
+**Settings → Account**) returns to the connect screen. If the server can't be reached, the app
+offers **Try again** or **Change server**.
+
+Build a debug APK (needs JDK 21 and the Android SDK, with `sdk.dir` in `android/local.properties`):
+
+```bash
+npm run android:debug     # -> android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+To test against your local dev server from the Android emulator:
+
+```bash
+adb reverse tcp:8080 tcp:8080   # then enter http://localhost:8080 in the app
+```
+
+Plain HTTP is allowed only to `localhost` and `10.0.2.2` (the emulator's alias for the host);
+real servers must use HTTPS. Use `localhost` via `adb reverse` where you can: the WebView
+treats `http://10.0.2.2` as insecure, so the map's locate button won't work there.
+
+The launcher icon is generated from `assets/` with
+`npx capacitor-assets generate --android --iconBackgroundColor '#0f766e' --splashBackgroundColor '#0f766e'`.
+
 ## API
 
 ### NSW Fuel API
@@ -138,6 +165,8 @@ server/src/
 server/migrations SQL migrations, applied on startup
 server/data       postcode gazetteer
 web/src           React app (pages/MapPage, pages/SettingsPage)
+capacitor-www/    the Android app's connect screen
+android/          Capacitor Android project
 ```
 
 ## Attribution

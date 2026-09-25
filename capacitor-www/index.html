@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>MyFuel</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f6f7f9; --surface: #ffffff; --border: #dde1e7; --text: #16191d; --muted: #5f6b7a;
+    --accent: #0f766e; --accent-contrast: #ffffff; --error: #b91c1c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216; --surface: #171b21; --border: #2c343e; --text: #e6e9ee; --muted: #93a0b0;
+      --accent: #2dd4bf; --accent-contrast: #0b1512; --error: #f87171;
+    }
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px; box-sizing: border-box;
+  }
+  .card {
+    width: 100%; max-width: 360px; box-sizing: border-box;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  p.hint { font-size: 14px; color: var(--muted); margin: 0 0 20px; line-height: 1.4; }
+  label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+  input {
+    width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 16px;
+    border: 1px solid var(--border); border-radius: 8px; background: transparent; color: inherit;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  p.error { color: var(--error); font-size: 14px; min-height: 20px; margin: 8px 0 12px; }
+  button {
+    width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600;
+    background: var(--accent); color: var(--accent-contrast);
+  }
+  button:disabled { opacity: 0.5; }
+</style>
+</head>
+<body>
+  <form class="card" id="connect-form">
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0f766e"/><path d="M9 25V8a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17M8 25h13M12 10h5v4h-5zM20 13h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V12l-3-3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      MyFuel
+    </div>
+    <p class="hint">Enter the address of your MyFuel server, e.g. https://myfuel.example.com</p>
+    <label for="url">Server URL</label>
+    <input id="url" type="url" placeholder="https://myfuel.example.com" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url" required />
+    <p class="error" id="error"></p>
+    <button id="submit" type="submit">Connect</button>
+  </form>
+
+  <script>
+    (function () {
+      // Adds https:// if no scheme was typed and reduces the address to its origin
+      function normalize(raw) {
+        var value = (raw || '').trim();
+        if (!value) return null;
+        if (!/^https?:\/\//i.test(value)) value = 'https://' + value;
+        try {
+          var url = new URL(value);
+          return url.protocol === 'https:' || url.protocol === 'http:' ? url.origin : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      var form = document.getElementById('connect-form');
+      var input = document.getElementById('url');
+      var errorEl = document.getElementById('error');
+      var button = document.getElementById('submit');
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var url = normalize(input.value);
+        if (!url) {
+          errorEl.textContent = 'Enter a valid address, e.g. https://myfuel.example.com';
+          return;
+        }
+        var plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ServerConfig;
+        if (!plugin) {
+          errorEl.textContent = 'This page only works inside the MyFuel app.';
+          return;
+        }
+        errorEl.textContent = '';
+        button.disabled = true;
+        button.textContent = 'Connecting…';
+        plugin.connect({ url: url }).catch(function (err) {
+          button.disabled = false;
+          button.textContent = 'Connect';
+          errorEl.textContent = "Couldn't save that: " + (err && err.message ? err.message : 'try again.');
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

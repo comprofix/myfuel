@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MyFuel</string>
+    <string name="title_activity_main">MyFuel</string>
+    <string name="package_name">com.comprofix.myfuel</string>
+    <string name="custom_url_scheme">com.comprofix.myfuel</string>
+</resources>

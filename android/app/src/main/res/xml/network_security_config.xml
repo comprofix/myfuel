@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!--
+      Plain HTTP is allowed ONLY to these local-testing addresses. The server URL is
+      typed in at runtime, so allowing cleartext everywhere would let a real server
+      entered as http:// send the session cookie in plain text. Real servers use HTTPS.
+
+      localhost: use with `adb reverse tcp:8080 tcp:8080`. It's a secure context, so
+                 the map's "Locate me" works over HTTP.
+      10.0.2.2:  the emulator's alias for the host machine's localhost ("Locate me"
+                 won't work here, as the WebView treats it as insecure).
+    -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

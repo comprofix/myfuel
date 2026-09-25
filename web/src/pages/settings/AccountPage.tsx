@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { api } from '../../api';
+import { changeServer, isNativeApp } from '../../native';
 import type { Msg } from './shared';
 
 export function AccountPage() {
@@ -33,6 +34,15 @@ export function AccountPage() {
           {msg && <span className={msg.ok ? 'success' : 'error'}>{msg.text}</span>}
         </div>
       </form>
+      {isNativeApp && (
+        <section className="card">
+          <h2>Server</h2>
+          <p className="muted small">This app is connected to <strong>{window.location.host}</strong>.</p>
+          <div className="actions">
+            <button onClick={changeServer}>Change server</button>
+          </div>
+        </section>
+      )}
     </>
   );
 }

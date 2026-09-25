@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { api, type User } from '../api';
+import { changeServer, isNativeApp } from '../native';
 
 export function LoginPage({ onLogin }: { onLogin: (u: User) => void }) {
   const [username, setUsername] = useState('');
@@ -37,6 +38,11 @@ export function LoginPage({ onLogin }: { onLogin: (u: User) => void }) {
         </label>
         {error && <p className="error">{error}</p>}
         <button className="primary" disabled={busy || !username || !password}>{busy ? 'Signing in…' : 'Sign in'}</button>
+        {isNativeApp && (
+          <p className="muted small">
+            Server: {window.location.host} · <button type="button" className="link" onClick={changeServer}>Change server</button>
+          </p>
+        )}
       </form>
     </div>
   );
