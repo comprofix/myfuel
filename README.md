@@ -9,6 +9,7 @@ the map never calls providers directly and API quotas are respected.
 |---|---|---|
 | NSW (incl. ACT), TAS | NSW Fuel API (FuelCheck) | API key + secret |
 | NT | MyFuel NT | No |
+| QLD | Fuel Prices QLD Direct API | Subscriber token |
 | WA | FuelWatch | No |
 
 Built mobile-first: on phones the map fills the screen with the station list in a bottom
@@ -33,7 +34,8 @@ docker compose up -d --build
 ```
 
 Open http://localhost:8080 and sign in. In **Settings → Data sources**, click NSW or TAS to
-enter the NSW API key and secret and **Test connection**; NT and WA need no key. Tick **Poll**
+enter the NSW API key and secret, click QLD to enter the Fuel Prices QLD subscriber token, and
+**Test connection**; NT and WA need no key. Tick **Poll**
 for each region you want refreshed on its schedule.
 
 ## Local development
@@ -75,6 +77,26 @@ schedule. The poller stops when `monthly limit − reserve` is reached; manual r
 stop at the hard limit. Defaults: NSW every 30 min, TAS every 2 h, paused 22:00–05:00
 Sydney time ≈ 1,400 calls/month.
 
+### Fuel Prices QLD
+
+QLD prices come from the [Fuel Prices QLD](https://www.fuelpricesqld.com.au/) Direct API
+(Informed Sources, for the Queensland Government), host
+`https://fppdirectapi-prod.fuelpricesqld.com.au`. It needs a subscriber token:
+
+1. Apply as a data consumer at https://www.fuelpricesqld.com.au/ and accept the licence
+   terms; you're emailed a subscriber token (a GUID).
+2. In MyFuel, go to **Settings → Data sources**, click **QLD**, paste the token, then
+   **Test connection**. Pasting the whole `FPDAPI SubscriberToken=…` header value also works.
+
+- Each refresh makes one prices request for the whole state. Sites, brands, fuel types and
+  suburb names are fetched once a day (4 calls) and kept in memory, as the API guide asks.
+- Prices come in tenths of a cent (`1679` = 167.9c/L); `9999` means the fuel is
+  unavailable and is skipped. Timestamps are UTC.
+- Fuel types are matched by name; blends such as `e10/Unleaded` are skipped. **Test
+  connection** lists any QLD fuel types that aren't shown. `OPAL` is stored as `LAF`.
+- The API asks for no more than one prices call a minute; there's no monthly quota.
+- Default refresh: every 30 minutes.
+
 ### MyFuel NT
 
 NT prices come from [MyFuel NT](https://myfuelnt.nt.gov.au/), the NT Government's official
@@ -109,7 +131,7 @@ official fuel price service, through its public RSS feed
 
 ```
 server/src/
-  sources/        one adapter per provider (nsw.ts, nt.ts, wa.ts) + credential/quota service
+  sources/        one adapter per provider (nsw.ts, nt.ts, qld.ts, wa.ts) + credential/quota service
   poller.ts       scheduler; ingest.ts applies a snapshot and records price history
   routes/         stations/search API and admin API
   auth.ts         sessions (httpOnly cookie), scrypt password hashes
@@ -122,5 +144,6 @@ web/src           React app (pages/MapPage, pages/SettingsPage)
 
 Postcode/locality data © [GeoNames](https://www.geonames.org/) (CC BY 4.0).
 Map tiles © OpenStreetMap contributors. Fuel data © NSW Government (FuelCheck),
-[MyFuel NT](https://myfuelnt.nt.gov.au/) (NT Government) and
+[MyFuel NT](https://myfuelnt.nt.gov.au/) (NT Government),
+[Fuel Prices Queensland](https://www.fuelpricesqld.com.au/) (Queensland Government) and
 [FuelWatch](https://www.fuelwatch.wa.gov.au/) (WA Government); each is credited on the map.
